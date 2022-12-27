@@ -1,46 +1,42 @@
-data = open("input.txt").read().split('\n\n')
-monke = [[] for _ in range(len(data) )]
-op = [[] for _ in range(len(data))]
-div =[0 for _ in range(len(data) ) ]
-throw = [[] for _ in range(len(data) )]
-for x in data:
-    A = x.split('\n')
-    index = int(A[0].split()[1][:-1])
-    monke[index] += [int(x[:-1] if x[-1] == ',' else x) for x in A[1].split()[2:]]
-    op[index] = [x for x in A[2].split()[-2:]]
-    div[index] = int(A[3].split()[-1])
-    throw[index] = list(int(A[i].split()[-1]) for i in [4, 5])
-
-def operate(index, val):
-    a = val if op[index][1] == 'old' else int(op[index][1])
-    if op[index][0] == '*':
-        return a * val
-    else:
-        return a + val
-
+import re
 MOD = 1
-for x in div:
-    MOD *= x;
+class monkey:
+    def __init__(self, s):
+        s = s.splitlines()
+        self.values = list(map(int, re.findall(r'\d+', s[1]) ) )
+        op1, op, op2 = s[2].split('=')[-1].split()
+        self.operands = [op1, op2]
+        self.operation = op
+        self.test = int(re.findall(r'\d+', s[3])[0])
+        self.true_throw = int(re.findall(r'\d+', s[4])[0])
+        self.false_throw = int(re.findall(r'\d+', s[5])[0])
+        self.inspected = 0
 
-res = [0 for _ in range(len(data) )]
-for i in range(10000):
-    for j in range(len(data) ):
-        res[j] += len(monke[j])
-        for x in monke[j]:
-            val = (operate(j, x) ) % MOD
-            if val % div[j]:
-                monke[throw[j][1]].append(val)
-            else:
-                monke[throw[j][0]].append(val)
-        monke[j].clear()
+    def operate(self, index):
+        op1, op2 = self.operands
+        a = (str(self.values[index]) if op1 == 'old' else op1)
+        b = (str(self.values[index]) if op2 == 'old' else op2)
+        value = (eval(a + self.operation + b) % MOD)
+        if not value % self.test:
+            return value, self.true_throw
+        else:
+            return value, self.false_throw
 
+data = open("input.txt").read().split('\n\n')
+monkeys = [monkey(x) for x in data]
+for x in monkeys:   MOD *= x.test
+
+for _ in range(10000):
+    for x in monkeys:
+        x.inspected += len(x.values)
+        for i, val in enumerate(x.values):
+            value, to = x.operate(i)
+            monkeys[to].values.append(value)
+        x.values.clear()
+
+res = [x.inspected for x in monkeys]
 res.sort()
 print(res[-1] * res[-2])
-            
-            
 
 
-
-
-
-
+    
