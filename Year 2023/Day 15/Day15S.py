@@ -26,6 +26,7 @@ def process(string):
                 continue
             boxes[cur][i] = [string, int(f)]
             found = True
+            break
         if not found:
             boxes[cur].append([string, int(f)])
 
